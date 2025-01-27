@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User{
+  id String @id @default(uuid())
+  firstname String        
+  lastname  String    
+  email     String   @unique              
+  password  String        
+  profile   String   @default("https://i.pinimg.com/736x/96/83/aa/9683aaa7b396888f2f7a6df3197d2374.jpg")
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())   
+  updatedAt DateTime @default(now()) 
+  customer Customer? @relation()
+  cart Cart[]
+}
+
+model Customer{
+  id Int @id @default(autoincrement())
+  userId String @unique
+  address String
+  phone String
+  departamento String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id])
+  order Order[]
+}
+
+enum Role {
+  ADMIN
+  USER
+  CUSTOMER
+}
+
+
+model Product {
+  id String @id @default(uuid())
+  name String
+  price Decimal
+  stock Int
+  categories ProductCategory[] @relation("ProductCategories")
+  orderDetail OrderDetail[]
+  cart Cart[]
+}
+
+model Category {
+  id Int @id @default(autoincrement())
+  name String
+  products ProductCategory[] @relation("ProductCategories")
+}
+
+model ProductCategory {
+  productId String
+  categoryId Int
+  product Product @relation(fields: [productId], references: [id], name: "ProductCategories")
+  category Category @relation(fields: [categoryId], references: [id], name: "ProductCategories")
+
+  @@id([productId, categoryId])
+}
+
+
+
+
+model Order{
+  id Int @id @default(autoincrement())
+  customerId Int
+  methodPayment String
+  total Decimal
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  orderDetail OrderDetail[]
+  payment Payment @relation(fields: [methodPayment],references: [id])
+  customer Customer @relation(fields: [customerId],references: [id])
+}
+
+model OrderDetail{
+  id Int @id @default(autoincrement())
+  orderId Int
+  productId String
+  description String
+  quantity Int
+  price Decimal
+  discount Decimal? @default(0) @db.Decimal(10,2)
+  total Decimal @db.Decimal(10,2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  order Order @relation(fields: [orderId],references: [id])
+  products Product @relation(fields: [productId],references: [id])
+}
+
+
+
+model Payment{
+  id String @id @default(uuid())
+  payment String
+  order Order[]
+}
+
+model Cart{
+  id Int @id @default(autoincrement())
+  userId String
+  productId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  user User @relation(fields: [userId],references: [id])
+  product Product @relation(fields: [productId],references: [id])
+}
