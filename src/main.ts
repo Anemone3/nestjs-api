@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as morgan from 'morgan'
 import { CORS } from './config';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -13,7 +14,7 @@ async function bootstrap() {
   //console.log(configServer.get('PORT'));
 
   app.enableCors(CORS);
-
+  app.use(cookieParser());
   app.setGlobalPrefix('api');
 
   await app.listen(configServer.get('PORT') ?? 3000, () => {

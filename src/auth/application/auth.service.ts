@@ -1,20 +1,52 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AuthRepository } from '../domain/auth.repository';
 import { CreateUserDto } from 'src/user/domain/dto';
+import { JwtService } from '@nestjs/jwt';
+import { AuthResponse } from '../domain/authResponse.interface';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-    constructor(
-        @Inject('AuthRepository')
-        private authRepository:AuthRepository
-    ){}
+  constructor(
+    @Inject('AuthRepository')
+    private authRepository: AuthRepository,
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService
+  ) {}
 
-    async login(email:string, password:string){
-        return await this.authRepository.login(email, password);
+  async login(email: string, password: string) {
+    return await this.authRepository.login(email, password);
+  }
+
+  async register(createUserDto: CreateUserDto) {
+    return await this.authRepository.register(createUserDto);
+  }
+
+  async verifiyUser(otp: string, email: string): Promise<AuthResponse> {
+    try {
+      const user = await this.authRepository.verifyUser(otp, email);
+
+      const payload = { sub: user.id, email: user.email };
+
+      const accessToken = await this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('jwt.JWT_ACCESS_SECRET'),
+        expiresIn: '1d',
+      });
+
+      const refreshToken = await this.jwtService.signAsync(payload, {
+        secret: this.configService.get<string>('jwt.JWT_REFRESH_SECRET'),
+        expiresIn: '7d',
+      });
+
+      
+
+      return {
+        user,
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+        throw error
     }
-
-
-    async register(createUserDto:CreateUserDto){
-        return await this.authRepository.register(createUserDto);
-    }
+  }
 }

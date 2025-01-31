@@ -3,9 +3,9 @@ export class User {
   firstname: string;
   lastname: string;
   email: string;
-  password: string;
+  password?: string;
   profile: string;
-  role: Role;
+  role?: Role;
   createdAt?: string;
   updatedAt?: string;
 }

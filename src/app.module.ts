@@ -7,12 +7,14 @@ import { RedisModule } from './redis/redis.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OtpModule } from './otp/otp.module';
 import { EmailModule } from './email/email.module';
+import { EnvConfig } from './config/app.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       envFilePath: `.${process.env.NODE_ENV}.env`,
       isGlobal: true,
+      load:[()=>EnvConfig]
     }),
     PrismaModule,
     RedisModule,

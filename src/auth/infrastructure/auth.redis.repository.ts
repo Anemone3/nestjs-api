@@ -3,8 +3,9 @@ import { EmailService, MailErrorHandler } from 'src/email/email.service';
 import { OtpService } from 'src/otp/otp.service';
 import { CreateUserDto } from 'src/user/domain/dto';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
-import { User } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { User } from 'src/user/domain/user.entity';
+import { BcryptAdaptar } from 'src/utils/BcryptAdapter';
 
 @Injectable()
 export class RedisAuthRepositoryImpl implements AuthRepository {
@@ -18,11 +19,14 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
     const user = await this.prismaService.user.findUnique({
       where: {
         email,
-        password,
       },
     });
 
-    if (!user) throw new Error('User not found');
+    if (!user) throw new BadRequestException('User not found');
+
+    const isPasswordValid = BcryptAdaptar.compare(password, user.password);
+
+    if (!isPasswordValid) throw new BadRequestException('Wrong password');
 
     const otp = await this.otpService.saveOtp(email);
 
@@ -35,19 +39,18 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
 
   async register(createUserDto: CreateUserDto): Promise<string> {
     const { email, firstname, lastname, password } = createUserDto;
-    console.log('Creating user:', createUserDto);
     try {
-      const userRegister: User = await this.prismaService.user.create({
+      const passwordHashed = BcryptAdaptar.hash(password);
+
+      const userRegister = await this.prismaService.user.create({
         data: {
           email,
           firstname,
           lastname,
-          password,
+          password: passwordHashed,
           role: 'USER',
         },
       });
-
-      console.log('User registered:', userRegister);
 
       if (!userRegister) {
         throw new InternalServerErrorException('User not created');
@@ -65,15 +68,35 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
       return otp;
     } catch (error) {
       console.error('Error creating user:', error);
-      if(error instanceof MailErrorHandler){
-        throw new BadRequestException(error.message)
+      if (error instanceof MailErrorHandler) {
+        throw new BadRequestException(error.message);
       }
       throw new InternalServerErrorException('Failed to create user');
     }
   }
 
-  validateToken(token: string): Promise<string> {
-    throw new Error('Method not implemented.');
+  async verifyUser(otp: string, email: string): Promise<User> {
+    try {
+      const isVerificated: boolean = await this.otpService.verifyOtp(email, otp);
+      if (!isVerificated) throw new BadRequestException('Wrong otp code, retry again');
+
+      const user = await this.prismaService.user.findUnique({ where: { email } });
+
+      if (!user) throw new InternalServerErrorException('User not found');
+
+      return {
+        email: user.email,
+        firstname: user.firstname,
+        lastname: user.lastname,
+        id: user.id,
+        profile: user.profile,
+        createdAt: user.createdAt?.toString(),
+        updatedAt: user.updatedAt?.toString(),
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw new BadRequestException(error.message);
+      throw new InternalServerErrorException('Failed to verify user');
+    }
   }
 
   refreshToken(token: string): Promise<string> {
