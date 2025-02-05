@@ -56,11 +56,7 @@ model Product {
   recetas Json?
 }
 
-model Category {
-  id Int @id @default(autoincrement())
-  name String @unique
-  products Product[] @relation("ProductCategories")
-}
+
 
 model ProductSize{
   productId String
@@ -74,7 +70,11 @@ model ProductSize{
 
 
 
-
+model Category {
+  id Int @id @default(autoincrement())
+  name String @unique
+  products Product[] @relation("ProductCategories")
+}
 
 model Order{
   id Int @id @default(autoincrement())
@@ -125,8 +125,8 @@ model Cart{
   quantity Int @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
-  user User @relation(fields: [userId],references: [id])
-  product Product @relation(fields: [productId],references: [id])
+  user User @relation(fields: [userId],references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId],references: [id], onDelete: Cascade)
 
 
   @@unique([userId, productId, size])

@@ -59,12 +59,19 @@ export class ProductRepositoryImpl implements ProductRepository {
       return this.mapToEntity(product);
     } catch (error) {
       if (error.code === 'P2002') {
+        console.log(createDto.name);
+
         if (error.meta && error.meta.target === 'Product_name_key') {
           throw new ConflictException('Ya existe un producto con ese nombre.');
         }
         if (error.meta && error.meta.target === 'Product_images_key') {
           throw new ConflictException('Ya existe un producto con esa imagen.');
         }
+        if (error.meta && error.meta.target === 'Category_name_key') {
+          throw new ConflictException('Ya existe un producto con la misma categoria relacioanda');
+        }
+
+        console.log(error.meta.target);
 
         throw new ConflictException('Error de clave única: alguno de los campos ya existe.');
       }

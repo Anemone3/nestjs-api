@@ -11,6 +11,7 @@ import { EnvConfig } from './config/app.config';
 import { CategoryProductModule } from './categories/application/category-product.module';
 import { OrderModule } from './order/application/order.module';
 import { CartModule } from './cart/application/cart.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CartModule } from './cart/application/cart.module';
     CategoryProductModule,
     OrderModule,
     CartModule,
+    SeedModule,
   ],
   controllers: [],
   providers: [],
