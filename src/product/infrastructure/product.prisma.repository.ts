@@ -1,56 +1,114 @@
-import { CreateProductDto, UpdateProductDto } from '../domain/dto';
+import { CreateProductDto, UpdateProductDto } from './dto';
 import { ProductRepository } from '../domain/product.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Product as ProductPrisma } from '@prisma/client';
+import { Product as ProductPrisma, Category as CategoryPrisma, ProductSize, Prisma } from '@prisma/client';
 import { Product } from '../domain/product.entity';
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  LoggerService,
+} from '@nestjs/common';
+import slugify from 'slugify';
+
+type ProductWithRelations = ProductPrisma & {
+  categories?: CategoryPrisma[];
+  availableSizes: ProductSize[];
+};
 
 @Injectable()
 export class ProductRepositoryImpl implements ProductRepository {
+  private logger: LoggerService = new Logger();
+
   constructor(private readonly prismaService: PrismaService) {}
 
-  save(createDto: CreateProductDto): Promise<Product> {
-    throw new Error('Method not implemented.');
+  async save(createDto: CreateProductDto): Promise<Product> {
+    const { categories, sizes, ...productInsert } = createDto;
+
+    try {
+      const product = await this.prismaService.product.create({
+        data: {
+          ...productInsert,
+          slug: slugify(productInsert.name, { lower: true, replacement: '_' }),
+          categories: {
+            connectOrCreate: categories.map(categoryName => ({
+              where: {
+                name: categoryName,
+              },
+              create: {
+                name: categoryName,
+              },
+            })),
+          },
+          availableSizes: {
+            create: sizes.map(s => ({
+              price: s.price,
+              size: s.size,
+              stock: s.stock,
+            })),
+          },
+        },
+        include: {
+          categories: true,
+          availableSizes: true,
+        },
+      });
+
+      return this.mapToEntity(product);
+    } catch (error) {
+      if (error.code === 'P2002') {
+        if (error.meta && error.meta.target === 'Product_name_key') {
+          throw new ConflictException('Ya existe un producto con ese nombre.');
+        }
+        if (error.meta && error.meta.target === 'Product_images_key') {
+          throw new ConflictException('Ya existe un producto con esa imagen.');
+        }
+
+        throw new ConflictException('Error de clave única: alguno de los campos ya existe.');
+      }
+      this.logger.log(error);
+      throw new InternalServerErrorException('Error al crear producto, check logger');
+    }
   }
-  update(id: String, updateDto: UpdateProductDto): Promise<Product> {
+
+  update(id: string, updateDto: UpdateProductDto): Promise<Product> {
     throw new Error('Method not implemented.');
   }
   remove(id: string): Promise<Product> {
-    try {
-      const product = this.prismaService.product.delete({
-        where: {
-          id: id,
-        },
-      });
-      return product;
-    } catch (err) {
-      throw new InternalServerErrorException(err);
-    }
-  }
-  async findById(id: string): Promise<Product> {
-    try {
-      const product = await this.prismaService.product.findUnique({
-        where: {
-          id: id,
-        },
-      });
-
-      if (!product) throw new NotFoundException(`Product not found with id ${id}`);
-      return this.mapToProduct(product);
-    } catch (err) {
-      throw new InternalServerErrorException(err);
-    }
-  }
-  findAll(): Promise<Product[]> {
     throw new Error('Method not implemented.');
   }
+  findById(id: string): Promise<Product> {
+    throw new Error('Method not implemented.');
+  }
+  async findAll(): Promise<Product[]> {
+    const products = await this.prismaService.product.findMany({
+      include: {
+        availableSizes: true,
+        categories: true,
+      },
+    });
+    return products.map(product => this.mapToEntity(product));
+  }
 
-  private mapToProduct(product: ProductPrisma): Product {
+  private mapToEntity(model: ProductWithRelations): Product {
     return {
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      stock: product.stock,
+      id: model.id,
+      name: model.name,
+      price: Number(model.price),
+      slug: model.slug!,
+      description: model.description || 'Sin descripción',
+      categories: model.categories || [],
+      images: model.images || 'No hay imagenes.',
+      availableSizes:
+        model.availableSizes?.map(size => ({
+          size: size.size,
+          stock: size.stock,
+          price: Number(size.price),
+          productId: size.productId,
+        })) || [],
+      recetas: Array.isArray(model.recetas) ? model.recetas.map(rec => String(rec)) : [],
     };
   }
 }

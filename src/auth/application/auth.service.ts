@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AuthRepository } from '../domain/auth.repository';
-import { CreateUserDto } from 'src/user/domain/dto';
 import { JwtService } from '@nestjs/jwt';
 import { AuthResponse } from '../domain/authResponse.interface';
 import { ConfigService } from '@nestjs/config';
+import { LoginDto, RegisterDto } from './dto';
 
 @Injectable()
 export class AuthService {
@@ -14,12 +14,12 @@ export class AuthService {
     private readonly configService: ConfigService
   ) {}
 
-  async login(email: string, password: string) {
-    return await this.authRepository.login(email, password);
+  async login(loginDto: LoginDto) {
+    return await this.authRepository.login(loginDto.email, loginDto.password);
   }
 
-  async register(createUserDto: CreateUserDto) {
-    return await this.authRepository.register(createUserDto);
+  async register(registerDto: RegisterDto) {
+    return await this.authRepository.register(registerDto);
   }
 
   async verifiyUser(otp: string, email: string): Promise<AuthResponse> {

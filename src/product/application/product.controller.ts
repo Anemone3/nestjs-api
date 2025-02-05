@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { UpdateProductDto,CreateProductDto } from '../domain/dto';
+import { UpdateProductDto,CreateProductDto } from '../infrastructure/dto';
 import { ProductService } from './product.service';
+import { ApiCreatedResponse } from '@nestjs/swagger';
+import { Product } from '../domain/product.entity';
 
 
 
@@ -16,6 +18,7 @@ export class ProductController {
   }
 
   @Get()
+  @ApiCreatedResponse({type: Product})
   findAll() {
     return this.productService.findAll();
   }

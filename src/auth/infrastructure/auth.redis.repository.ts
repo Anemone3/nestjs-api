@@ -1,11 +1,11 @@
 import { AuthRepository } from '../domain/auth.repository';
 import { EmailService, MailErrorHandler } from 'src/email/email.service';
 import { OtpService } from 'src/otp/otp.service';
-import { CreateUserDto } from 'src/user/domain/dto';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'src/user/domain/user.entity';
 import { BcryptAdaptar } from 'src/utils/BcryptAdapter';
+import { RegisterDto } from '../application/dto';
 
 @Injectable()
 export class RedisAuthRepositoryImpl implements AuthRepository {
@@ -16,29 +16,37 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
   ) {}
 
   async login(email: string, password: string): Promise<string> {
-    const user = await this.prismaService.user.findUnique({
-      where: {
-        email,
-      },
-    });
 
-    if (!user) throw new BadRequestException('User not found');
 
-    const isPasswordValid = BcryptAdaptar.compare(password, user.password);
+    try {
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          email,
+        },
+      });
 
-    if (!isPasswordValid) throw new BadRequestException('Wrong password');
+      if (!user) throw new BadRequestException('User not found');
 
-    const otp = await this.otpService.saveOtp(email);
+      const isPasswordValid = BcryptAdaptar.compare(password, user.password);
 
-    if (!otp) throw new Error('Otp not found');
+      if (!isPasswordValid) throw new BadRequestException('Wrong password');
 
-    await this.sendEmail.sendEmail(email, 'Verify otp', 'User verification', `<h1>Your otp code is:  ${otp}</h1>`);
+      const otp = await this.otpService.saveOtp(email);
 
-    return otp;
+      if (!otp) throw new Error('Otp not found');
+
+      await this.sendEmail.sendEmail(email, 'Verify otp', 'User verification', `<h1>Your otp code is:  ${otp}</h1>`);
+
+      return otp;
+    } catch (error) {
+      console.log(error);
+
+      throw new InternalServerErrorException('check logger login');
+    }
   }
 
-  async register(createUserDto: CreateUserDto): Promise<string> {
-    const { email, firstname, lastname, password } = createUserDto;
+  async register(registerDto: RegisterDto): Promise<string> {
+    const { email, firstname, lastname, password } = registerDto;
     try {
       const passwordHashed = BcryptAdaptar.hash(password);
 
