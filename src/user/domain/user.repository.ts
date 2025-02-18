@@ -1,9 +1,8 @@
-import { JpaRepository } from "src/utils/JpaRepository";
-import { CreateUserDto } from "./dto/create-user.dto";
-import { UpdateUserDto } from "./dto/update-user.dto";
-import { User } from "./user.entity";
+import { JpaRepository } from 'src/utils/JpaRepository';
 
+import { User } from './user.entity';
+import { CreateUserDto, UpdateUserDto } from '../infrastructure/dto';
 
-export interface UserRepository extends JpaRepository<User,string,CreateUserDto,UpdateUserDto>{
-    findUserByEmail(email:string): Promise<User>;
+export interface UserRepository extends JpaRepository<User, string, CreateUserDto, UpdateUserDto> {
+  findUserByEmail(email: string): Promise<User>;
 }

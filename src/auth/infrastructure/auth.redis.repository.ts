@@ -3,9 +3,11 @@ import { EmailService, MailErrorHandler } from 'src/email/email.service';
 import { OtpService } from 'src/otp/otp.service';
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from 'src/user/domain/user.entity';
+
 import { BcryptAdaptar } from 'src/utils/BcryptAdapter';
-import { RegisterDto } from '../application/dto';
+import { RegisterDto } from './dto';
+import { User } from 'src/user/domain/user.entity';
+
 
 @Injectable()
 export class RedisAuthRepositoryImpl implements AuthRepository {
@@ -14,10 +16,11 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
     private readonly sendEmail: EmailService,
     private readonly otpService: OtpService,
   ) {}
+  refreshToken(token: string): Promise<string> {
+    throw new Error('Method not implemented.');
+  }
 
   async login(email: string, password: string): Promise<string> {
-
-
     try {
       const user = await this.prismaService.user.findUnique({
         where: {
@@ -41,7 +44,7 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
     } catch (error) {
       console.log(error);
 
-      throw new InternalServerErrorException('check logger login');
+      throw error;
     }
   }
 
@@ -105,10 +108,6 @@ export class RedisAuthRepositoryImpl implements AuthRepository {
       if (error instanceof BadRequestException) throw new BadRequestException(error.message);
       throw new InternalServerErrorException('Failed to verify user');
     }
-  }
-
-  refreshToken(token: string): Promise<string> {
-    throw new Error('Method not implemented.');
   }
 
   logout(token: string): Promise<string> {

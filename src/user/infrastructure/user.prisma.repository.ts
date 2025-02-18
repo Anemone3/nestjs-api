@@ -1,15 +1,10 @@
 import { PrismaService } from 'src/prisma/prisma.service';
-import { CreateUserDto } from '../domain/dto/create-user.dto';
 import { User } from '../domain/user.entity';
 import { UserRepository } from '../domain/user.repository';
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { User as UserPrisma, Role as PrismaRole } from '@prisma/client';
 import { Role } from '../domain/user.entity';
-import { UpdateUserDto } from '../domain/dto/update-user.dto';
+import { CreateUserDto, UpdateUserDto } from './dto';
 
 @Injectable()
 export class UserPrismaRepositoryImpl implements UserRepository {
@@ -29,7 +24,7 @@ export class UserPrismaRepositoryImpl implements UserRepository {
 
   async findAll(): Promise<User[]> {
     const users = await this.prismaService.user.findMany();
-    return users.map((user) => this.mappedToEntity(user));
+    return users.map(user => this.mappedToEntity(user));
   }
 
   async findUserByEmail(email: string): Promise<User> {
@@ -38,8 +33,7 @@ export class UserPrismaRepositoryImpl implements UserRepository {
         email: email,
       },
     });
-    if (!user)
-      throw new NotFoundException(`User not found with email ${email}`);
+    if (!user) throw new NotFoundException(`User not found with email ${email}`);
 
     return this.mappedToEntity(user);
   }

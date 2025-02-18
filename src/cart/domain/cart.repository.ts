@@ -1,5 +1,5 @@
 import { Cart } from './cart.entity';
-import { CreateCartDto, UpdateCartDto } from '../application/dto';
+import { CreateCartDto, UpdateCartDto } from '../infrastructure/dto';
 
 export interface CartRepository {
   incrementCart(userId: string, createDto: CreateCartDto): Promise<Cart>;

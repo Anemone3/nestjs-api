@@ -8,6 +8,7 @@ import { MailKeys } from 'src/config/app.config';
   imports: [
     MailerModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>(MailKeys.host),
@@ -22,7 +23,6 @@ import { MailKeys } from 'src/config/app.config';
           from: `<${configService.get<string>(MailKeys.from)}>`,
         },
       }),
-      inject: [ConfigService],
     }),
   ],
   providers: [EmailService],

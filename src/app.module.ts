@@ -1,17 +1,18 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AuthModule } from './auth/application/auth.module';
-import { UserModule } from './user/application/user.module';
-import { ProductModule } from './product/application/product.module';
+import { AuthModule } from './auth/auth.module';
+import { ProductModule } from './product/product.module';
 import { RedisModule } from './redis/redis.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { OtpModule } from './otp/otp.module';
 import { EmailModule } from './email/email.module';
 import { EnvConfig } from './config/app.config';
-import { CategoryProductModule } from './categories/application/category-product.module';
-import { OrderModule } from './order/application/order.module';
-import { CartModule } from './cart/application/cart.module';
+import { OrderModule } from './order/order.module';
 import { SeedModule } from './seed/seed.module';
+import { CustomerModule } from './customer/customer.module';
+import { CategoryProductModule } from './categories/category-product.module';
+import { CartModule } from './cart/cart.module';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { SeedModule } from './seed/seed.module';
     OrderModule,
     CartModule,
     SeedModule,
+    CustomerModule,
   ],
   controllers: [],
   providers: [],

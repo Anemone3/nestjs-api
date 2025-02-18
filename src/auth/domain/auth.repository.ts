@@ -1,5 +1,5 @@
 import { User } from 'src/user/domain/user.entity';
-import { RegisterDto } from '../application/dto';
+import { RegisterDto } from '../infrastructure/dto';
 
 //todo: make response
 export interface AuthRepository {

@@ -12,6 +12,7 @@ import {
   LoggerService,
 } from '@nestjs/common';
 import slugify from 'slugify';
+import { PaginationDto } from './dto/pagination-product.dto';
 
 type ProductWithRelations = ProductPrisma & {
   categories?: CategoryPrisma[];
@@ -23,6 +24,59 @@ export class ProductRepositoryImpl implements ProductRepository {
   private logger: LoggerService = new Logger();
 
   constructor(private readonly prismaService: PrismaService) {}
+
+  async paginationProduct(paginationDto: PaginationDto): Promise<{ products: Product[]; result: number, totalPage: number }> {
+    const { limit = 9, page: offset = 1, category } = paginationDto;
+
+    console.log({ limit, offset, category });
+
+    try {
+      const [product, totalCount] = await Promise.all([
+        this.prismaService.product.findMany({
+          skip: (offset - 1) * limit,
+          take: limit,
+          where:
+            category && category.length > 0
+              ? {
+                  categories: {
+                    some: {
+                      name: {
+                        in: category,
+                      },
+                    },
+                  },
+                }
+              : {},
+          include: {
+            availableSizes: true,
+            categories: true,
+          },
+        }),
+        this.prismaService.product.count({
+          where:
+            category && category.length > 0
+              ? {
+                  categories: {
+                    some: {
+                      name: {
+                        in: category,
+                      },
+                    },
+                  },
+                }
+              : {},
+        }),
+      ]);
+
+      const totalPages = Math.ceil(totalCount / limit);
+
+      return { products: product.map(p => this.mapToEntity(p)), result: totalCount, totalPage: totalPages };
+    } catch (error) {
+      this.logger.error(error);
+
+      throw new InternalServerErrorException(error);
+    }
+  }
 
   async save(createDto: CreateProductDto): Promise<Product> {
     const { categories, sizes, ...productInsert } = createDto;

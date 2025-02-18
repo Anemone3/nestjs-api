@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import * as morgan from 'morgan';
 import { CORS } from './config';
+import * as cors from 'cors';
 import * as cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
@@ -15,7 +16,12 @@ async function bootstrap() {
   app.use(morgan('dev'));
   console.log(configServer.get('PORT'));
 
-  app.enableCors(CORS);
+  app.use(
+    cors({
+      origin: true,
+      credentials: true,
+    }),
+  );
   app.use(cookieParser());
   app.setGlobalPrefix('api');
   app.useGlobalPipes(

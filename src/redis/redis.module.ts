@@ -10,11 +10,11 @@ import { EnvsKeys } from "src/config/app.config";
   imports: [
     NRedistModule.forRootAsync({
       imports: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'single',
         url: configService.get<string>(EnvsKeys.redisUrl),
       }),
-      inject: [ConfigService],
     }),
   ],
   providers: [RedisService],

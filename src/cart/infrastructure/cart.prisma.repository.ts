@@ -6,7 +6,7 @@ import {
   LoggerService,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateCartDto, UpdateCartDto } from '../application/dto';
+import { CreateCartDto, UpdateCartDto } from './dto';
 import { Cart, ProductCart, Size } from '../domain/cart.entity';
 import { CartRepository } from '../domain/cart.repository';
 import { PrismaService } from 'src/prisma/prisma.service';
